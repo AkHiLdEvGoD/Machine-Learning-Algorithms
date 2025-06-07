@@ -1,7 +1,17 @@
 import numpy as np
 from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
 
 X,y = load_iris(return_X_y=True)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42)
+
+class Node:
+    def __init__(self,feature=None,thresh=None,right=None,left=None,*,value=None):
+        self.feature_index = feature
+        self.thresh = thresh
+        self.right_tree = right
+        self.left_tree = left
+        self.value = value        
 
 class Decision_Tree_Classifier:
     def __init__(self,max_depth):
@@ -9,7 +19,7 @@ class Decision_Tree_Classifier:
         self.root = None
 
     def fit(self,X,y):
-        self.root = self.tree(X,y)
+        self.root = self.grow_tree(X,y)
     
     def gini(self,y):
         _,counts = np.unique(y,return_counts=True)
@@ -29,7 +39,7 @@ class Decision_Tree_Classifier:
                 left_mask = X[:,feature] <= thresh
                 right_mask = X[:,feature] > thresh
                 
-                if len(left_mask) == 0 or len(right_mask) == 0:
+                if len(y[left_mask]) == 0 or len(y[right_mask]) == 0:
                     continue
                 
                 left_node_gini = self.gini(y[left_mask])
@@ -42,10 +52,39 @@ class Decision_Tree_Classifier:
                     best_feature = feature
                     best_threshold = thresh
         
-        print(best_feature)
-        print(best_threshold)
-        print(best_gini)
         return best_feature,best_threshold
+    
+    def grow_tree(self,X,y,depth=0):
+        classes = np.unique(y)
+        
+        print(f"\n At depth {depth}:")
+        print(f"  Classes: {np.unique(y)}")
+        print(f"  max_depth: {self.max_depth}")
+
+        if depth >= self.max_depth or len(classes) == 1 :
+            leaf_value = self.majority_class(y)
+            print(f"Stopping: returning leaf with value = {leaf_value}")
+            return Node(value = leaf_value)
+        
+        feature,thresh = self.best_split(X,y)
+        print(f"  Best Split -> Feature: {feature}, Threshold: {thresh}")
+        
+        if feature is None:
+            print(f"  ⚠️ No valid split found. Returning leaf with value = {leaf_value}")
+            return Node(value=self.majority_class(y))
+        
+        left_mask = X[:,feature] <= thresh
+        right_mask = X[:,feature] > thresh
+
+        left_tree = self.grow_tree(X[left_mask],y[left_mask],depth+1)
+        right_tree = self.grow_tree(X[right_mask],y[right_mask],depth+1)
+        
+        return Node(feature = feature,thresh = thresh,right=right_tree,left=left_tree)
+    
+    def majority_class(self,y):
+        values,counts = np.unique(y,return_counts=True)
+        return values[np.argmax(counts)]
+
 
 tree = Decision_Tree_Classifier(5)
-tree.best_split(X,y)
+tree.fit(X_train,y_train)
