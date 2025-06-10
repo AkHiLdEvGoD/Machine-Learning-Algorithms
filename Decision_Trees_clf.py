@@ -71,10 +71,10 @@ class Decision_Tree_Classifier:
             return Node(value = leaf_value)
         
         feature,thresh = self.best_split(X,y)
-        print(f"  Best Split -> Feature: {feature}, Threshold: {thresh}")
+        print(f"Best Split -> Feature: {feature}, Threshold: {thresh}")
         
         if feature is None:
-            print(f"  ⚠️ No valid split found. Returning leaf with value = {leaf_value}")
+            print(f"No valid split found. Returning leaf with value = {leaf_value}")
             return Node(value=self.majority_class(y))
         
         left_mask = X[:,feature] <= thresh
