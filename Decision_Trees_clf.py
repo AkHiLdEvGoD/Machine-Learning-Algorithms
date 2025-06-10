@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 X,y = load_iris(return_X_y=True)
 X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42)
@@ -12,6 +13,9 @@ class Node:
         self.right_tree = right
         self.left_tree = left
         self.value = value        
+
+    def is_leaf(self):
+        return self.value is not None
 
 class Decision_Tree_Classifier:
     def __init__(self,max_depth):
@@ -85,6 +89,18 @@ class Decision_Tree_Classifier:
         values,counts = np.unique(y,return_counts=True)
         return values[np.argmax(counts)]
 
+    def predict(self,X):
+        return np.array([self._predict(input,self.root) for input in X])
 
-tree = Decision_Tree_Classifier(5)
+    def _predict(self,input,node):
+        if node.is_leaf():
+            return node.value
+        if input[node.feature_index] <= node.thresh:
+            return self._predict(input,node.left_tree)
+        else:
+            return self._predict(input,node.right_tree)
+
+tree = Decision_Tree_Classifier(4)
 tree.fit(X_train,y_train)
+y_pred = tree.predict(X_test)
+print('Accuarcy :',accuracy_score(y_pred,y_test))
